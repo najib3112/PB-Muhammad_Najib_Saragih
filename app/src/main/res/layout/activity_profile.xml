@@ -11,7 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="?actionBarSize"
         android:theme="@style/AppTheme.AppBarOverlay"
-        android:layout_marginTop="10dp">
+        android:layout_marginTop="10dp"
+        tools:ignore="MissingConstraints">
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -31,7 +32,8 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_marginTop="80dp"
-        android:padding="16dp">
+        android:padding="16dp"
+        tools:ignore="MissingConstraints">
 
         <!-- Profile Image -->
         <ImageView
@@ -58,6 +60,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="email@example.com"
+            android:textSize="16sp"
+            android:layout_marginTop="10dp"
+            android:gravity="center" />
+
+        <!-- User NIM -->
+        <TextView
+            android:id="@+id/profile_nim"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="NIM: 123456789"
             android:textSize="16sp"
             android:layout_marginTop="10dp"
             android:gravity="center" />

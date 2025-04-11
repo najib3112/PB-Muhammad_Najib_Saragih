@@ -3,8 +3,14 @@ package com.example.noteshop;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.view.View; // Import View
+import android.widget.EditText; // Import EditText
+import android.widget.Button; // Import Button
+import android.util.Log; // Import Log for debugging
 
+import androidx.appcompat.app.AlertDialog; // Import AlertDialog
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -48,10 +54,19 @@ public class MainActivity extends AppCompatActivity implements MainAdapter.Fireb
         // Set up Navigation Drawer
         navigationView.setNavigationItemSelectedListener(this::onNavigationItemSelected);
 
-        // Firebase Database reference
-        mDatabaseReference = FirebaseDatabase.getInstance().getReference("barang").child("data_barang");
+        // Update user info in the navigation header
+        View headerView = navigationView.getHeaderView(0);
+        TextView usernameTextView = headerView.findViewById(R.id.user_name);
+        TextView emailTextView = headerView.findViewById(R.id.user_email);
+        if (mAuth.getCurrentUser() != null) {
+            usernameTextView.setText(mAuth.getCurrentUser().getDisplayName());
+            emailTextView.setText(mAuth.getCurrentUser().getEmail());
+        }
 
-        // Check if user is logged in
+        // Firebase Database reference
+        mDatabaseReference = FirebaseDatabase.getInstance().getReference("barang").child("data_barang"); // Update to correct Firebase URL
+
+        // Check if user is logged in and redirect to LoginActivity if not
         if (mAuth.getCurrentUser() == null) {
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             startActivity(intent);
@@ -63,8 +78,7 @@ public class MainActivity extends AppCompatActivity implements MainAdapter.Fireb
 
         // Set up Floating Action Button (FAB) to add new item
         findViewById(R.id.tambah_barang).setOnClickListener(v -> {
-            // Open dialog to add new item (implement dialog functionality here)
-            dialogTambahBarang();
+            dialogTambahBarang(); // Open dialog to add new item
         });
 
         // Add a toggle to open/close the navigation drawer
@@ -79,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements MainAdapter.Fireb
         mDatabaseReference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                ArrayList<ModelBarang> daftarBarang = new ArrayList<>();
+                ArrayList<ModelBarang> daftarBarang = new ArrayList<>(); // Initialize the list to hold barang items
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     ModelBarang barang = snapshot.getValue(ModelBarang.class);
                     barang.setKey(snapshot.getKey());
@@ -87,6 +101,7 @@ public class MainActivity extends AppCompatActivity implements MainAdapter.Fireb
                 }
 
                 // Initialize and set adapter for RecyclerView
+                Log.d("MainActivity", "Daftar barang: " + daftarBarang.toString()); // Log the list of barang items
                 if (mAdapter == null) {
                     mAdapter = new MainAdapter(MainActivity.this, daftarBarang);
                     mRecyclerView.setAdapter(mAdapter);
@@ -129,10 +144,35 @@ public class MainActivity extends AppCompatActivity implements MainAdapter.Fireb
     }
 
     private void dialogTambahBarang() {
-        // Implement dialog to add new item to Firebase
-        // Example:
-        // AlertDialog dialog = new AlertDialog.Builder(this).setTitle("Add Item").create();
-        // dialog.show();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_tambah_barang, null);
+        EditText editNama = view.findViewById(R.id.edit_nama);
+        EditText editMerk = view.findViewById(R.id.edit_merk);
+        EditText editHarga = view.findViewById(R.id.edit_harga);
+        Button btnSimpan = view.findViewById(R.id.btn_simpan);
+
+        builder.setView(view);
+        AlertDialog dialog = builder.create();
+
+        btnSimpan.setOnClickListener(v -> {
+            String nama = editNama.getText().toString();
+            String merk = editMerk.getText().toString();
+            String harga = editHarga.getText().toString();
+
+            if (!nama.isEmpty() && !merk.isEmpty() && !harga.isEmpty()) {
+                String key = mDatabaseReference.push().getKey(); // Generate a unique key for the new item
+                Log.d("MainActivity", "Generated key: " + key); // Log the generated key for debugging
+                ModelBarang barang = new ModelBarang(nama, merk, harga);
+                barang.setKey(key);
+                mDatabaseReference.child(key).setValue(barang);
+                Toast.makeText(MainActivity.this, "Barang berhasil ditambahkan", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            } else {
+                Toast.makeText(MainActivity.this, "Semua field harus diisi", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        dialog.show();
     }
 
     @Override
